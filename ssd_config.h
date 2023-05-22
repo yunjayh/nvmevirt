@@ -66,7 +66,7 @@ enum {
 
 #define SSD_PARTITIONS (4)
 #define NAND_CHANNELS (8)
-#define LUNS_PER_NAND_CH (2)
+#define LUNS_PER_NAND_CH (2) // HYJ: TODO: change this parameter with given parameter
 #define PLNS_PER_LUN (1)
 #define FLASH_PAGE_SIZE KB(32)
 #define ONESHOT_PAGE_SIZE (FLASH_PAGE_SIZE * 1)
@@ -89,7 +89,7 @@ static_assert((ONESHOT_PAGE_SIZE % FLASH_PAGE_SIZE) == 0);
 #define NAND_PROG_LATENCY (185000)
 #define NAND_ERASE_LATENCY (0)
 
-#define FW_4KB_READ_LATENCY (21500)
+#define FW_4KB_READ_LATENCY (21500) // HYJ: change this parameter with given parameter?
 #define FW_READ_LATENCY (30490)
 #define FW_WBUF_LATENCY0 (4000)
 #define FW_WBUF_LATENCY1 (460)

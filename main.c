@@ -67,6 +67,8 @@ static unsigned int write_time = 1;
 static unsigned int write_delay = 1;
 static unsigned int write_trailing = 0;
 
+static unsigned int nchips_mult = 1;
+
 static unsigned int nr_io_units = 8;
 static unsigned int io_unit_shift = 12;
 
@@ -366,6 +368,12 @@ static ssize_t __proc_file_write(struct file *file, const char __user *buf, size
 						 * requests accessing the unit_stat are all returned
 						 */
 		kfree(old_stat);
+	} else if (!strcmp(filename, "nchips_mult")) {
+		ret = sscanf(input, "%u", &cfg->nchips_mult);
+		ASSERT(cfg->nchips_mult % 512 == 0);
+		cfg->nchips_mult /= 512;
+		//adjust_ftl_latency(1, cfg->write_time);
+		NVMEV_INFO("[%s] nchips_mult=%d \n", __FUNCTION__, cfg->nchips_mult);
 	} else if (!strcmp(filename, "stat")) {
 		int i;
 		for (i = 1; i <= nvmev_vdev->nr_sq; i++) {
@@ -429,6 +437,8 @@ void NVMEV_STORAGE_INIT(struct nvmev_dev *nvmev_vdev)
 		proc_create("write_times", 0664, nvmev_vdev->proc_root, &proc_file_fops);
 	nvmev_vdev->proc_io_units =
 		proc_create("io_units", 0664, nvmev_vdev->proc_root, &proc_file_fops);
+	nvmev_vdev->proc_nchips_mult =
+		proc_create("nchips_mult", 0664, nvmev_vdev->proc_root, &proc_file_fops);
 	nvmev_vdev->proc_stat = proc_create("stat", 0444, nvmev_vdev->proc_root, &proc_file_fops);
 	nvmev_vdev->proc_stat = proc_create("debug", 0444, nvmev_vdev->proc_root, &proc_file_fops);
 }
@@ -476,6 +486,7 @@ static bool __load_configs(struct nvmev_config *config)
 	config->write_time = write_time;
 	config->write_delay = write_delay;
 	config->write_trailing = write_trailing;
+	config->nchips_mult = nchips_mult;
 	config->nr_io_units = nr_io_units;
 	config->io_unit_shift = io_unit_shift;
 

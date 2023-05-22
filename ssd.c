@@ -74,6 +74,8 @@ void ssd_init_params(struct ssdparams *spp, uint64_t capacity, uint32_t nparts)
 	spp->nchs = NAND_CHANNELS;
 	spp->pls_per_lun = PLNS_PER_LUN;
 	spp->luns_per_ch = LUNS_PER_NAND_CH;
+	if (NS_SSD_TYPE(0) == SSD_TYPE_CONV)
+		spp->luns_per_ch *= nvmev_vdev->config.nchips_mult;
 	spp->cell_mode = CELL_MODE;
 
 	/* partitioning SSD by dividing channel*/
