@@ -28,6 +28,8 @@
 #define NVMEV_DEBUG(string, args...)
 #endif
 
+#define NVMEV_HYJ(string, args...) printk(KERN_INFO "%s: " string, NVMEV_DRV_NAME, ##args)
+
 #define NR_MAX_IO_QUEUE 72
 #define NR_MAX_PARALLEL_IO 16384
 

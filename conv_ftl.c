@@ -390,6 +390,7 @@ void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *
 	uint32_t i;
 	const uint32_t nr_parts = SSD_PARTITIONS;
 
+	NVMEV_ASSERT(!(CONV_SSD_SIZE % 512));
 	ssd_init_params(&spp, size, nr_parts);
 	conv_init_params(&cpp);
 
