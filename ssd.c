@@ -123,7 +123,7 @@ void ssd_init_params(struct ssdparams *spp, uint64_t capacity, uint32_t nparts)
 	spp->fw_wbuf_lat1 = FW_WBUF_LATENCY1;
 
 	spp->ch_bandwidth = NAND_CHANNEL_BANDWIDTH;
-	spp->pcie_bandwidth = PCIE_BANDWIDTH;
+	spp->pcie_bandwidth = nvmev_vdev->config.pcie_gen == 4 ? PCIE_BANDWIDTH_GEN4 : PCIE_BANDWIDTH;
 
 	spp->write_buffer_size = GLOBAL_WB_SIZE;
 	spp->write_early_completion = WRITE_EARLY_COMPLETION;
@@ -264,7 +264,10 @@ static void ssd_init_ch(struct ssd_channel *ch, struct ssdparams *spp)
 	chmodel_init(ch->perf_model, spp->ch_bandwidth);
 
 	/* Add firmware overhead */
-	ch->perf_model->xfer_lat += (spp->fw_ch_xfer_lat * UNIT_XFER_SIZE / KB(4));
+	if (nvmev_vdev->config.pcie_gen == 4)
+		ch->perf_model->xfer_lat += (spp->fw_ch_xfer_lat * UNIT_XFER_SIZE_GEN4 / KB(4));
+	else
+		ch->perf_model->xfer_lat += (spp->fw_ch_xfer_lat * UNIT_XFER_SIZE / KB(4));
 }
 
 static void ssd_remove_ch(struct ssd_channel *ch)

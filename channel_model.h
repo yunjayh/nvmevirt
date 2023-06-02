@@ -7,6 +7,7 @@
 #define NR_CREDIT_ENTRIES (1024 * 96)
 #define UNIT_TIME_INTERVAL (4000ULL) //ns
 #define UNIT_XFER_SIZE (128ULL) //bytes
+#define UNIT_XFER_SIZE_GEN4 (256ULL) //bytes
 #define UNIT_XFER_CREDITS (1) //credits needed to transfer data(UNIT_XFER_SIZE)
 
 #define SIZE_OF_CREDIT_T 1
@@ -40,6 +41,10 @@ struct channel_model {
 #define BANDWIDTH_TO_TX_TIME(MB_S) (((UNIT_XFER_SIZE)*NS_PER_SEC(1)) / (MB(MB_S)))
 #define BANDWIDTH_TO_MAX_CREDITS(MB_S) \
 	(MB(MB_S) * UNIT_TIME_INTERVAL / NS_PER_SEC(1) / UNIT_XFER_SIZE * UNIT_XFER_CREDITS)
+
+#define BANDWIDTH_TO_TX_TIME_GEN4(MB_S) (((UNIT_XFER_SIZE_GEN4)*NS_PER_SEC(1)) / (MB(MB_S)))
+#define BANDWIDTH_TO_MAX_CREDITS_GEN4(MB_S) \
+	(MB(MB_S) * UNIT_TIME_INTERVAL / NS_PER_SEC(1) / UNIT_XFER_SIZE_GEN4 * UNIT_XFER_CREDITS)
 
 uint64_t chmodel_request(struct channel_model *ch, uint64_t request_time, uint64_t length);
 void chmodel_init(struct channel_model *ch, uint64_t bandwidth /*MB/s*/);

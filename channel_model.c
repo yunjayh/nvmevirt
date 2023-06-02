@@ -18,9 +18,15 @@ void chmodel_init(struct channel_model *ch, uint64_t bandwidth /*MB/s*/)
 	ch->head = 0;
 	ch->valid_len = 0;
 	ch->cur_time = 0;
-	ch->max_credits = BANDWIDTH_TO_MAX_CREDITS(bandwidth);
+	if (nvmev_vdev->config.pcie_gen == 4)
+		ch->max_credits = BANDWIDTH_TO_MAX_CREDITS_GEN4(bandwidth);
+	else
+		ch->max_credits = BANDWIDTH_TO_MAX_CREDITS(bandwidth);
 	ch->command_credits = 0;
-	ch->xfer_lat = BANDWIDTH_TO_TX_TIME(bandwidth);
+	if (nvmev_vdev->config.pcie_gen == 4)
+		ch->xfer_lat = BANDWIDTH_TO_TX_TIME_GEN4(bandwidth);
+	else
+		ch->xfer_lat = BANDWIDTH_TO_TX_TIME(bandwidth);
 
 	MEMSET(&(ch->avail_credits[0]), ch->max_credits, NR_CREDIT_ENTRIES);
 
@@ -36,8 +42,11 @@ uint64_t chmodel_request(struct channel_model *ch, uint64_t request_time, uint64
 	uint32_t default_delay, delay = 0;
 	uint32_t valid_length;
 	uint64_t total_latency;
-	uint32_t units_to_xfer = DIV_ROUND_UP(length, UNIT_XFER_SIZE);
+	uint32_t units_to_xfer;
 	uint32_t cur_time_offs, request_time_offs;
+
+	units_to_xfer = nvmev_vdev->config.pcie_gen == 4 ? \
+			DIV_ROUND_UP(length, UNIT_XFER_SIZE_GEN4) : DIV_ROUND_UP(length, UNIT_XFER_SIZE);
 
 	// Search current time index and move head to it
 	cur_time_offs = (cur_time / UNIT_TIME_INTERVAL) - (ch->cur_time / UNIT_TIME_INTERVAL);

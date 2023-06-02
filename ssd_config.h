@@ -79,7 +79,9 @@ static_assert((ONESHOT_PAGE_SIZE % FLASH_PAGE_SIZE) == 0);
 #define WRITE_UNIT_SIZE (512)
 
 #define NAND_CHANNEL_BANDWIDTH (800ull) //MB/s
-#define PCIE_BANDWIDTH (3360ull) //MB/s
+#define PCIE_BANDWIDTH (3360ull) //MB/s //gen3
+#define PCIE_BANDWIDTH_GEN4 (7500ull) //MB/s //gen4
+
 
 #define NAND_4KB_READ_LATENCY_LSB (35760 - 6000) //ns
 #define NAND_4KB_READ_LATENCY_MSB (35760 + 6000) //ns

@@ -139,6 +139,8 @@ struct nvmev_config {
 	unsigned int write_delay; // ns
 	unsigned int write_time; // ns
 	unsigned int write_trailing; // ns
+
+	unsigned int pcie_gen;
 };
 
 struct nvmev_proc_table {
@@ -232,6 +234,7 @@ struct nvmev_dev {
 	struct proc_dir_entry *proc_write_times;
 	struct proc_dir_entry *proc_io_units;
 	struct proc_dir_entry *proc_stat;
+	struct proc_dir_entry *proc_pcie_gen;
 
 	unsigned long long *io_unit_stat;
 };

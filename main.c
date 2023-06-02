@@ -73,6 +73,8 @@ static unsigned int io_unit_shift = 12;
 static char *cpus;
 static unsigned int debug = 0;
 
+static unsigned int pcie_gen = 3;
+
 int io_using_dma = false;
 
 static int set_parse_mem_param(const char *val, const struct kernel_param *kp)
@@ -286,6 +288,9 @@ static int __get_nr_entries(int dbs_idx, int queue_size)
 	return diff;
 }
 
+void NVMEV_NAMESPACE_INIT(struct nvmev_dev *nvmev_vdev);
+void NVMEV_NAMESPACE_FINAL(struct nvmev_dev *nvmev_vdev);
+
 static int __proc_file_read(struct seq_file *m, void *data)
 {
 	const char *filename = m->private;
@@ -327,6 +332,8 @@ static int __proc_file_read(struct seq_file *m, void *data)
 			   total_io);
 	} else if (strcmp(filename, "debug") == 0) {
 		/* Left for later use */
+	} else if (strcmp(filename, "pcie_gen") == 0) {
+		seq_printf(m, "PCIe Gen%u", cfg->pcie_gen);
 	}
 
 	return 0;
@@ -377,7 +384,11 @@ static ssize_t __proc_file_write(struct file *file, const char __user *buf, size
 		}
 	} else if (!strcmp(filename, "debug")) {
 		/* Left for later use */
-	}
+	} else if (!strcmp(filename, "pcie_gen")) {
+		ret = sscanf(input, "%u", &cfg->pcie_gen);
+		NVMEV_NAMESPACE_FINAL(nvmev_vdev);
+		NVMEV_NAMESPACE_INIT(nvmev_vdev);
+	} 
 
 out:
 	__print_perf_configs();
@@ -429,6 +440,7 @@ void NVMEV_STORAGE_INIT(struct nvmev_dev *nvmev_vdev)
 		proc_create("write_times", 0664, nvmev_vdev->proc_root, &proc_file_fops);
 	nvmev_vdev->proc_io_units =
 		proc_create("io_units", 0664, nvmev_vdev->proc_root, &proc_file_fops);
+	nvmev_vdev->proc_pcie_gen = proc_create("pcie_gen", 0644, nvmev_vdev->proc_root, &proc_file_fops);
 	nvmev_vdev->proc_stat = proc_create("stat", 0444, nvmev_vdev->proc_root, &proc_file_fops);
 	nvmev_vdev->proc_stat = proc_create("debug", 0444, nvmev_vdev->proc_root, &proc_file_fops);
 }
@@ -440,6 +452,7 @@ void NVMEV_STORAGE_FINAL(struct nvmev_dev *nvmev_vdev)
 	remove_proc_entry("io_units", nvmev_vdev->proc_root);
 	remove_proc_entry("stat", nvmev_vdev->proc_root);
 	remove_proc_entry("debug", nvmev_vdev->proc_root);
+	remove_proc_entry("pcie_gen", nvmev_vdev->proc_root);
 
 	remove_proc_entry("nvmev", NULL);
 
@@ -478,6 +491,7 @@ static bool __load_configs(struct nvmev_config *config)
 	config->write_trailing = write_trailing;
 	config->nr_io_units = nr_io_units;
 	config->io_unit_shift = io_unit_shift;
+	config->pcie_gen = pcie_gen;
 
 	config->nr_io_cpu = 0;
 	config->cpu_nr_dispatcher = -1;
