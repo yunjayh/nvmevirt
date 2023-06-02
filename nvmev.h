@@ -140,6 +140,8 @@ struct nvmev_config {
 	unsigned int write_time; // ns
 	unsigned int write_trailing; // ns
 
+	unsigned int config_modified;
+
 	unsigned int pcie_gen;
 };
 

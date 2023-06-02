@@ -75,4 +75,6 @@ void conv_remove_namespace(struct nvmev_ns *ns);
 bool conv_proc_nvme_io_cmd(struct nvmev_ns *ns, struct nvmev_request *req,
 			   struct nvmev_result *ret);
 
+void adjust_ssd_params(struct ssdparams *spp);
+
 #endif

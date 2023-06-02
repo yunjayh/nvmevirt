@@ -73,6 +73,8 @@ static unsigned int io_unit_shift = 12;
 static char *cpus;
 static unsigned int debug = 0;
 
+static unsigned int config_modified = 0;
+
 static unsigned int pcie_gen = 3;
 
 int io_using_dma = false;
@@ -355,6 +357,9 @@ static ssize_t __proc_file_write(struct file *file, const char __user *buf, size
 	if (!strcmp(filename, "read_times")) {
 		ret = sscanf(input, "%u %u %u", &cfg->read_delay, &cfg->read_time,
 			     &cfg->read_trailing);
+		cfg->config_modified = 1;
+		NVMEV_NAMESPACE_FINAL(nvmev_vdev);
+		NVMEV_NAMESPACE_INIT(nvmev_vdev);
 		//adjust_ftl_latency(0, cfg->read_time);
 	} else if (!strcmp(filename, "write_times")) {
 		ret = sscanf(input, "%u %u %u", &cfg->write_delay, &cfg->write_time,
@@ -492,6 +497,7 @@ static bool __load_configs(struct nvmev_config *config)
 	config->nr_io_units = nr_io_units;
 	config->io_unit_shift = io_unit_shift;
 	config->pcie_gen = pcie_gen;
+	config->config_modified = config_modified;
 
 	config->nr_io_cpu = 0;
 	config->cpu_nr_dispatcher = -1;

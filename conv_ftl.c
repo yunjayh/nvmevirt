@@ -392,6 +392,7 @@ void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *
 
 	NVMEV_ASSERT(!(CONV_SSD_SIZE % 512));
 	ssd_init_params(&spp, size, nr_parts);
+	adjust_ssd_params(&spp);
 	conv_init_params(&cpp);
 
 	conv_ftls = kmalloc(sizeof(struct conv_ftl) * nr_parts, GFP_KERNEL);
@@ -1074,4 +1075,38 @@ bool conv_proc_nvme_io_cmd(struct nvmev_ns *ns, struct nvmev_request *req, struc
 	}
 
 	return true;
+}
+
+#define READ_TIME_TO_MAX_BW(read_time) (NS_PER_SEC(1) / (read_time * 256)) // MB/s
+
+void adjust_ssd_params(struct ssdparams *spp)
+{
+	if (nvmev_vdev->config.config_modified == 0) {
+		return; // do not adjust from vanilla kernel
+	}
+
+    int tDMA = FLASH_PAGE_SIZE / NAND_CHANNEL_BANDWIDTH * US_PER_SEC(1) / MB(1); // us
+    int avg_pg_4kb_rd_lat = (spp->pg_4kb_rd_lat[CELL_TYPE_LSB] + spp->pg_4kb_rd_lat[CELL_TYPE_MSB]) / 2 \
+							/ (1000ull); //us
+    uint64_t MAX_BW = READ_TIME_TO_MAX_BW(nvmev_vdev->config.read_time);
+
+	NVMEV_HYJ("tDMA: %d, tR: %d, MAX_BW: %lld\n", tDMA, avg_pg_4kb_rd_lat, MAX_BW);
+
+    if (tDMA * (spp->luns_per_ch - 1) > avg_pg_4kb_rd_lat) {
+        spp->ch_bandwidth = MAX_BW / NAND_CHANNELS;
+		NVMEV_HYJ("DMA BOUND CASE 1: (n - 1) * tDMA > tR | DMA BW: %lld\n", spp->ch_bandwidth);
+    }
+    else {
+        uint64_t DMA_BW = MAX_BW / NAND_CHANNELS;
+        tDMA = FLASH_PAGE_SIZE / DMA_BW * US_PER_SEC(1) / MB(1);
+        if ((spp->luns_per_ch - 1) * tDMA > avg_pg_4kb_rd_lat) {
+            spp->ch_bandwidth = DMA_BW;
+			NVMEV_HYJ("DMA BOUND CASE 2: (n - 1) * tDMA > tR | prev tDMA: %d, DMA BW: %lld\n", tDMA, spp->ch_bandwidth);
+        } else {
+            tDMA = (FLASH_PAGE_SIZE * NAND_CHANNELS) / MAX_BW * US_PER_SEC(1) / MB(1) - avg_pg_4kb_rd_lat;
+            if (tDMA < 1) tDMA = 1; // Set MAX DMA Bandwidth as 31250
+            spp->ch_bandwidth = BYTE_TO_MB(FLASH_PAGE_SIZE / tDMA * US_PER_SEC(1ull));
+			NVMEV_HYJ("NAND BOUND CASE: (n - 1) * tDMA < tR | tDMA: %d, DMA BW: %lld\n", tDMA, spp->ch_bandwidth);
+        }
+    }
 }
